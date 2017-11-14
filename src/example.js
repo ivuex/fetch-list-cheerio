@@ -1,6 +1,6 @@
 const fsc = require("fs-cheerio");
-// const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
 
 class IconHtmlFetcher{
     constructor(optionObj){
@@ -9,29 +9,38 @@ class IconHtmlFetcher{
                 this[key] = optionObj[key];
             }
         }
-        this.htmlAry = [];
-        // console.log(this);
+        this.iconObjAry = [];
     };
-    updateIconAry() {
+    fetch() {
         const that = this;
         fsc.readFile(this.path).then(function($){
             $(that.selectorStr).each((index, item)=>{
                 const identify = item.attribs.class.replace(that.classPrefix, '');
                 let html = that.template.replace(/\{\{tagName\}\}/g, that.tagName);
                 html = html.replace(/\{\{identify\}\}/g, identify);
-                that.htmlAry.push(html);
+                const iconObj = {
+                    identify,
+                    html,
+                };
+                that.iconObjAry.push(iconObj);
             });
+        }).then(function(){
+            console.log('if you can see this line, the then block function which contain writeFile code was executed!');
+            const str = JSON.stringify(that.iconObjAry);
+            const toPath = path.resolve(__dirname, that.label + 'ListObj.js'); 
+            fs.writeFile(toPath, str);
         });       
     };
     init(){
-        this.updateIconAry();
+        this.fetch();
         const that = this;
-        setTimeout(()=> console.log(that.htmlAry), 3000);
+        // setTimeout(()=> console.log(that.htmlAry), 3000);
     }
 }
 
 const fontawesomeIconFetcher = new IconHtmlFetcher(
     {
+        label: 'fontawesome',
         path: path.resolve('../srcHtml', 'fontawesome.list', 'index.html'),
         selectorStr: '.fa-hover a i.fa',
         classPrefix: 'fa fa-',
@@ -41,6 +50,7 @@ const fontawesomeIconFetcher = new IconHtmlFetcher(
 );
 const glyphiconsIconFetcher = new IconHtmlFetcher(
     {
+        label: 'glyphicons',
         path: path.resolve('../srcHtml', 'glyphicons.list', 'index.html'),
         selectorStr: '.bs-glyphicons-list li span.glyphicon',
         classPrefix: 'glyphicon glyphicon-',
@@ -49,4 +59,4 @@ const glyphiconsIconFetcher = new IconHtmlFetcher(
     }
 );
 glyphiconsIconFetcher.init();
-// fontawesomeIconFetcher.init();
+fontawesomeIconFetcher.init();
